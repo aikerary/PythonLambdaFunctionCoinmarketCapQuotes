@@ -1,7 +1,10 @@
 import json
 import boto3
-import requests
+import urllib3
 from datetime import datetime
+
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('CryptoPrecios')
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('CryptoPrecios')
@@ -14,13 +17,15 @@ def lambda_handler(event, context):
             'symbol': 'BTC,ETH'
         }
         headers = {
-            'ae927795-11bd-4aca-917f-eef3bc5237fa'
+            'X-CMC_PRO_API_KEY': 'ae927795-11bd-4aca-917f-eef3bc5237fa'
         }
-        response = requests.get(url, params=params, headers=headers).json()
+        http = urllib3.PoolManager()
+        response = http.request('GET', url, fields=params, headers=headers)
+        data = json.loads(response.data.decode('utf-8'))
 
         # Formatear datos y almacenarlos en DynamoDB
         for crypto in ['BTC', 'ETH']:
-            precio = response['data'][crypto]['quote']['USD']['price']
+            precio = str(data['data'][crypto]['quote']['USD']['price'])
             fecha = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             item = {
                 'CryptoId': crypto,
