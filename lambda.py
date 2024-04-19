@@ -17,4 +17,14 @@ def lambda_handler(event, context):
     }
     response = requests.get(url, params=params, headers=headers).json()
 
-    
+    # Formatear datos y almacenarlos en DynamoDB
+    for crypto in ['BTC', 'ETH']:
+        precio = response['data'][crypto]['quote']['USD']['price']
+        fecha = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        item = {
+            'CryptoId': crypto,
+            'Fecha': fecha,
+            'Precio': precio
+        }
+        table.put_item(Item=item)
+
